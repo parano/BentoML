@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from tensorflow import keras
+import tensorflow as tf
 from bentoml import api, env, BentoService, artifacts
 from bentoml.artifact import TfKerasModelArtifact, PickleArtifact
 from bentoml.handlers import JsonHandler
@@ -24,12 +24,14 @@ class TextClassificationService(BentoService):
         """
         text = parsed_json['text']
         
-        sequence = keras.preprocessing.text.hashing_trick(
+        sequence = tf.keras.preprocessing.text.hashing_trick(
             text,
             256,
             hash_function=self.word_to_index,
             filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',
             lower=True,
             split=' ')
-
-        return self.artifacts.model.predict(np.expand_dims(sequence, 0))
+        
+        with tf.get_default_graph().as_default():
+            with tf.Session().as_default():
+                return self.artifacts.model.predict(np.expand_dims(sequence, 0))
