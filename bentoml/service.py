@@ -23,6 +23,7 @@ import inspect
 import logging
 import uuid
 from datetime import datetime
+from functools import wraps
 
 from six import add_metaclass
 from abc import abstractmethod, ABCMeta
@@ -78,6 +79,14 @@ class BentoServiceAPI(object):
         self._doc = doc
         self._handler = handler
         self._func = func
+
+    def add_api_func_wrapper(self, wrapper):
+        # apply wrapper to self._func
+        wrapped_func = wrapper(self._func)
+        # update wrapped function to look like original func with functools.wraps
+        wrapped_func = wraps(self._func)(wrapped_func)
+        # assign wrapped_func to self._func
+        self._func = wrapped_func
 
     @property
     def service(self):
@@ -249,7 +258,12 @@ def artifacts_decorator(artifacts):
 
 
 def env_decorator(
-    setup_sh=None, pip_dependencies=None, conda_channels=None, conda_dependencies=None
+    setup_sh=None,
+    pip_dependencies=None,
+    auto_pip_dependencies=False,
+    auto_local_modules=True,
+    conda_channels=None,
+    conda_dependencies=None,
 ):
     """Define environment and dependencies required for the BentoService being created
 
@@ -257,6 +271,12 @@ def env_decorator(
         setup_sh (str): bash script for initializing docker environment before loading
             the BentoService for inferencing
         pip_dependencies (list(str)): List of python PyPI package dependencies
+        auto_pip_dependencies (boolean): Whether or not extract list of pip dependencies
+            at time of creating a BentoService bundle, similar to how pipreqs library
+            works, default to False
+        auto_local_modules (boolean): Whether or not to automatically extract local
+            python modules that a BentoService is dependant on and include them in the
+            saved BentoService bundle
         conda_channels (list(str)): List of conda channels required for conda
             dependencies
         conda_dependencies (list(str)): List of conda dependencies required
@@ -264,9 +284,11 @@ def env_decorator(
 
     def decorator(bento_service_cls):
         bento_service_cls._env = BentoServiceEnv(
-            bento_service_name=bento_service_cls.name(),
+            name=bento_service_cls.name() + "-env",
             setup_sh=setup_sh,
             pip_dependencies=pip_dependencies,
+            auto_pip_dependencies=auto_pip_dependencies,
+            auto_local_modules=auto_local_modules,
             conda_channels=conda_channels,
             conda_dependencies=conda_dependencies,
         )
@@ -352,6 +374,20 @@ class BentoService(BentoServiceBase):
     >>>  bento_service = MyMLService()
     >>>  bento_service.pack('clf', trained_classifier_model)
     >>>  bento_service.save_to_dir('/bentoml_bundles')
+    >>>
+    >>>  # Alternative approach to definiting a BentoService
+    >>>  my_ml_service = BentoService()
+    >>>  my_ml_service.env(pip_dependencies=["scikit-learn"])
+    >>>
+    >>>  sklearn_model_artifact = SklearnModelArtifact('clf', trained_classifier_model)
+    >>>  my_ml_service.pack(sklearn_model_artifact)
+    >>>
+    >>>  @my_ml_service.api(DataframeHandler)
+    >>>  def predict(df):
+    >>>     my_ml_service.artifacts.clf.predict(df)
+    >>>
+    >>>  if __main__ == "":
+    >>>     my_ml_service.save()
     """
 
     # User may use @name to override this if they don't want the generated model
@@ -402,7 +438,7 @@ class BentoService(BentoServiceBase):
 
     @property
     def env(self):
-        return self._env
+        return self.__class__._env  # class attribute
 
     @classmethod
     def name(cls):  # pylint:disable=method-hidden
@@ -535,3 +571,9 @@ class BentoService(BentoServiceBase):
 
     def get_bento_service_metadata_pb(self):
         return SavedBundleConfig(self).get_bento_service_metadata_pb()
+
+    def _get_required_pip_dependencies(self):
+        # all handlers
+        # all artifacts
+        # bentoml itself
+        pass

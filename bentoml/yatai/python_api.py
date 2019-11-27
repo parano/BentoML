@@ -73,18 +73,19 @@ def upload_bento_service(bento_service, base_path=None, version=None):
 
     with TempDirectory() as tmpdir:
         save_to_dir(bento_service, tmpdir, version)
-        return _upload_bento_service(tmpdir, base_path)
+        return upload_bento_service_bundle(tmpdir, base_path)
 
 
-def _upload_bento_service(saved_bento_path, base_path):
-    bento_service_metadata = load_bento_service_metadata(saved_bento_path)
+def upload_bento_service_bundle(saved_bundle_path, repo_base_path=None):
+    bento_service_metadata = load_bento_service_metadata(saved_bundle_path)
 
     from bentoml.yatai import get_yatai_service
 
     # if base_path is not None, default repository base path in config will be override
-    if base_path is not None:
-        logger.warning("Overriding default repository path to '%s'", base_path)
-    yatai = get_yatai_service(repo_base_url=base_path)
+    if repo_base_path is not None:
+        logger.warning("Overriding default repository base path to '%s'",
+                       repo_base_path)
+    yatai = get_yatai_service(repo_base_url=repo_base_path)
 
     get_bento_response = yatai.GetBento(
         GetBentoRequest(
@@ -125,7 +126,7 @@ def _upload_bento_service(saved_bento_path, base_path):
         if os.path.exists(response.uri.uri):
             # due to copytree dst must not already exist
             shutil.rmtree(response.uri.uri)
-        shutil.copytree(saved_bento_path, response.uri.uri)
+        shutil.copytree(saved_bundle_path, response.uri.uri)
 
         _update_bento_upload_progress(yatai, bento_service_metadata)
 
@@ -144,7 +145,7 @@ def _upload_bento_service(saved_bento_path, base_path):
 
         fileobj = io.BytesIO()
         with tarfile.open(mode="w:gz", fileobj=fileobj) as tar:
-            tar.add(saved_bento_path, arcname=bento_service_metadata.name)
+            tar.add(saved_bundle_path, arcname=bento_service_metadata.name)
         fileobj.seek(0, 0)
 
         files = {'file': ('dummy', fileobj)}  # dummy file name because file name

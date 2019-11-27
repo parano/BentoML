@@ -32,6 +32,10 @@ class H2oModelArtifact(BentoServiceArtifact):
         ImportError: h2o package is required to use H2o model artifact
     """
 
+    @property
+    def pip_dependencies(self):
+        return ['h2o']
+
     def _model_file_path(self, base_path):
         return os.path.join(base_path, self.name)
 

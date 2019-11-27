@@ -96,9 +96,6 @@ def save_to_dir(bento_service, path, version=None):
     if bento_service.artifacts:
         bento_service.artifacts.save(module_base_path)
 
-    # write conda environment, requirement.txt
-    bento_service.env.save(path)
-
     # TODO: add bentoml.find_packages helper for more fine grained control over this
     # process, e.g. packages=find_packages(base, [], exclude=[], used_module_only=True)
     # copy over all custom model code
@@ -148,6 +145,10 @@ def save_to_dir(bento_service, path, version=None):
     # Also write bentoml.yml to module base path to make it accessible
     # as package data after pip installed as a python package
     config.write_to_path(module_base_path)
+
+    # write pip dependencies(requirement.txt) and conda environment config
+    # (environment.yml) file
+    bento_service._env.save(path, bento_service)
 
     # if bentoml package in editor mode(pip install -e), will include
     # that bentoml package to saved BentoService bundle

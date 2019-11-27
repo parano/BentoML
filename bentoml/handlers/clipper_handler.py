@@ -38,6 +38,10 @@ class ClipperHandler(BentoHandler):
     API server nor BentoML CLI.
     """
 
+    @property
+    def pip_dependencies(self):
+        return ['clipper_admin']
+
     def handle_request(self, request, func):
         raise NotImplementedError(
             "ClipperHandler does not support handling REST API prediction request"

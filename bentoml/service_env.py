@@ -17,11 +17,16 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import logging
 from sys import version_info
+
 from ruamel.yaml import YAML
+from pipreqs import pipreqs
 
 from bentoml.utils import Path
 from bentoml.configuration import get_bentoml_deploy_version
+
+logger = logging.getLogger(__name__)
 
 PYTHON_VERSION = "{major}.{minor}.{micro}".format(
     major=version_info.major, minor=version_info.minor, micro=version_info.micro
@@ -37,6 +42,19 @@ dependencies:
 """
 
 CONDA_ENV_DEFAULT_NAME = "bentoml-custom-conda-env"
+
+IGNORE_DIRS = [".hg", ".svn", ".git", ".tox", "__pycache__", "env", "venv",
+               "artifacts", "bundled_pip_dependencies"]
+
+
+def _get_imports_info(packages):
+    local = pipreqs.get_import_local(packages)
+    # Get packages that were not found locally
+    difference = [
+        x for x in packages if x.lower() not in [z['name'].lower() for z in local]
+    ]
+    imports = local + pipreqs.get_imports_info(difference)
+    return imports
 
 
 class CondaEnv(object):
@@ -75,31 +93,45 @@ class BentoServiceEnv(object):
     """Defines all aspect of the system environment requirements for a custom
     BentoService to be used. This includes:
 
-    conda environment - for most python third-party packages and libraries
-    requirements_txt  - for pypi dependencies that can be resolved by pip
-        when exported BentoArchieve is installed as a pypi package
-    setup_sh - for customizing the environment with user defined bash script
+    Args:
+        name (str): name of the BentoService environment
+        setup_sh (str): bash script for initializing docker environment before loading
+            the BentoService for inferencing
+        pip_dependencies (list(str)): List of python PyPI package dependencies
+        auto_pip_dependencies (boolean): Whether or not extract list of pip dependencies
+            at time of creating a BentoService bundle, similar to how pipreqs library
+            works, default to False
+        conda_channels (list(str)): List of conda channels required for conda
+            dependencies
+        conda_dependencies (list(str)): List of conda dependencies required
     """
 
     def __init__(
         self,
-        bento_service_name,
+        name="default",
         setup_sh=None,
         pip_dependencies=None,
+        auto_pip_dependencies=False,
+        auto_local_modules=True,
         conda_channels=None,
         conda_dependencies=None,
     ):
         self._python_version = PYTHON_VERSION
 
-        self._conda_env = CondaEnv(
-            "bentoml-" + bento_service_name, self._python_version
-        )
+        self._conda_env = CondaEnv("bentoml-" + name, self._python_version)
 
         bentoml_deploy_version = get_bentoml_deploy_version()
         self._pip_dependencies = ["bentoml=={}".format(bentoml_deploy_version)]
         if pip_dependencies:
             self._pip_dependencies += pip_dependencies
 
+        # if not auto_local_modules:
+        #     logger.warning(
+        #         "BentoServiceEnv auto_local_modules=False is not supported in current "
+        #         "version of BentoML"
+        #     )
+
+        self._auto_pip_dependencies = auto_pip_dependencies
         self._setup_sh = setup_sh
 
         if conda_channels:
@@ -150,20 +182,30 @@ class BentoServiceEnv(object):
             module_list = content.decode("utf-8").split("\n")
             self._pip_dependencies += module_list
 
-    def save(self, path):
+    def save(self, path, bento_service):
         conda_yml_file = os.path.join(path, "environment.yml")
         self._conda_env.write_to_yaml_file(conda_yml_file)
-
-        requirements_txt_file = os.path.join(path, "requirements.txt")
-
-        with open(requirements_txt_file, "wb") as f:
-            pip_content = "\n".join(self._pip_dependencies).encode("utf-8")
-            f.write(pip_content)
 
         if self._setup_sh:
             setup_sh_file = os.path.join(path, "setup.sh")
             with open(setup_sh_file, "wb") as f:
                 f.write(self._setup_sh)
+
+        requirements_txt_file = os.path.join(path, "requirements.txt")
+        bs_required_packages = bento_service._get_required_pip_dependencies()
+        if self._auto_pip_dependencies:
+            py_modules = pipreqs.get_all_imports(path, extra_ignore_dirs=IGNORE_DIRS)
+            py_packages = pipreqs.get_pkg_names(py_modules)
+            imports = _get_imports_info(
+                list(dict.fromkeys(py_packages + bs_required_packages))
+            )
+            pipreqs.generate_requirements_file(requirements_txt_file, imports)
+        else:
+            with open(requirements_txt_file, "wb") as f:
+                dependencies = list(
+                    dict.fromkeys(bs_required_packages + self._pip_dependencies)
+                )
+                f.write("\n".join(dependencies).encode("utf-8") + "\n")
 
     def to_dict(self):
         env_dict = dict()

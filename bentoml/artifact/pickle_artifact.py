@@ -45,6 +45,13 @@ class PickleArtifact(BentoServiceArtifact):
         else:
             self._pickle = pickle_module
 
+    @property
+    def pip_dependencies(self):
+
+        py_packages = pipreqs.get_pkg_names([self.pickle_module])
+
+        return []
+
     def _pkl_file_path(self, base_path):
         return os.path.join(base_path, self.name + self._pickle_extension)
 
