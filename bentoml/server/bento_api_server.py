@@ -202,6 +202,7 @@ def bento_service_api_wrapper(api, service_name, service_version):
         name=metric_name + "_counter",
         documentation='request count by response http status code',
         labelnames=['http_response_code'],
+        namespace=namespace,
     )
 
     def log_image(req, request_id):
