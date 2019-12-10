@@ -96,6 +96,8 @@ class TensorflowTensorHandler(BentoHandler):
             instances = decode_b64_if_needed(instances)
             parsed_tensor = tf.constant(instances)
             result = func(parsed_tensor)
+            if isinstance(result, tf.Tensor):
+                result = result.numpy().tolist()
 
         elif parsed_json.get("inputs"):
             # column mode
