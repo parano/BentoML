@@ -82,7 +82,7 @@ class _TensorflowFunctionWrapper:
         return _input
 
     @classmethod
-    def hook_loaded_moodel(cls, loaded_model):
+    def hook_loaded_model(cls, loaded_model):
         try:
             from tensorflow.python.util import tf_inspect
             from tensorflow.python.eager import def_function
@@ -194,7 +194,7 @@ class TensorflowSavedModelArtifact(BentoServiceArtifact):
     def load(self, path):
         saved_model_path = self._saved_model_path(path)
         loaded_model = _load_tf_saved_model(saved_model_path)
-        _TensorflowRestoredFunctionWrapper.hook_loaded_moodel(loaded_model)
+        _TensorflowFunctionWrapper.hook_loaded_model(loaded_model)
         return self.pack(loaded_model)
 
 
