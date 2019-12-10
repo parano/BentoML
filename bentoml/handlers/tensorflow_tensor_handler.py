@@ -17,9 +17,12 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+import base64
+import argparse
 import tensorflow as tf
 from flask import make_response, Response, jsonify
 from bentoml.handlers.base_handlers import BentoHandler, get_output_str
+from bentoml.exceptions import BentoMLException
 
 
 B64_KEY = 'b64'
@@ -50,16 +53,14 @@ class TensorflowTensorHandler(BentoHandler):
         * https://www.tensorflow.org/tfx/serving/api_rest#predict_api
 
     Args:
-        dtype (tf.dtypes): The expected dtype of the input tensor
-        shape (tuple): The expected shape of the input tensor.
-            shapes like (None, 28, 28) are supported
+        -
 
     Raises:
         BentoMLException: BentoML currently doesn't support Content-Type
     """
 
-    def __init__(self, spec=None):
-        self.spec = spec
+    # def __init__(self, spec=None):
+    #     self.spec = spec
         #self.input_names = input_names
 
     @property
@@ -95,20 +96,24 @@ class TensorflowTensorHandler(BentoHandler):
         if parsed_json.get("instances") is not None:
             instances = parsed_json.get("instances")
             instances = decode_b64_if_needed(instances)
+            parsed_tensor = tf.constant(instances)
+            result = func(parsed_tensor)
 
-            if self.spec is not None:
-                parsed_tensor = tf.constant(instances, self.spec.dtype)
-                # origin_shape_map = {parsed_tensor._id: parsed_tensor.shape}
-                if not self.spec.is_compatible_with(parsed_tensor):
-                    parsed_tensor = tf.reshape(parsed_tensor, tuple(i is None and -1 or i for i in self.spec.shape))
-                result = func(parsed_tensor)
-                # if result._id in origin_shape_map:
-                #     result = tf.reshape(result, origin_shape_map.get(result._id))
-                if isinstance(result, tf.Tensor):
-                    result = result.numpy().tolist()
-            else:
-                parsed_tensor = tf.constant(instances)
-                result = func(parsed_tensor)
+            # if self.spec is not None:
+            #     parsed_tensor = tf.constant(instances, self.spec.dtype)
+            #     # origin_shape_map = {parsed_tensor._id: parsed_tensor.shape}
+            #     if not self.spec.is_compatible_with(parsed_tensor):
+            #         parsed_tensor = tf.reshape(
+            #             parsed_tensor,
+            #             tuple(i is None and -1 or i for i in self.spec.shape))
+            #     result = func(parsed_tensor)
+            #     # if result._id in origin_shape_map:
+            #     #     result = tf.reshape(result, origin_shape_map.get(result._id))
+            #     if isinstance(result, tf.Tensor):
+            #         result = result.numpy().tolist()
+            # else:
+            #     parsed_tensor = tf.constant(instances)
+            #     result = func(parsed_tensor)
 
         elif parsed_json.get("inputs"):
             # column mode
@@ -168,7 +173,8 @@ class TensorflowTensorHandler(BentoHandler):
 
     def handle_aws_lambda_event(self, event, func):
         if event["headers"].get("Content-Type", "") == "application/json":
-            result = self._handle_raw_str(event["body"], event["headers"].get("output", "json"), func)
+            result = self._handle_raw_str(
+                event["body"], event["headers"].get("output", "json"), func)
         else:
             raise BentoMLException(
                 "BentoML currently doesn't support Content-Type: {content_type} for "
