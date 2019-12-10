@@ -36,6 +36,7 @@ class _TensorflowFunctionWrapper:
     TensorflowFunctionWrapper
     transform input tensor following function input signature
     '''
+
     def __init__(self, origin_func, fullargspec):
         self.origin_func = origin_func
         self.fullargspec = fullargspec
@@ -50,6 +51,9 @@ class _TensorflowFunctionWrapper:
             k: signatures[self._args_to_indices[k]]
             for k in kwargs
         }
+        # INFO:
+        # how signature with kwargs works?
+        # https://github.com/tensorflow/tensorflow/blob/v2.0.0/tensorflow/python/eager/function.py#L1519
 
         transformed_args = tuple(
             self._transform_input_by_tensorspec(arg, signatures[i])
@@ -59,7 +63,7 @@ class _TensorflowFunctionWrapper:
             for k, arg in kwargs.items()
         }
         return self.origin_func(*transformed_args, **transformed_kwargs)
-    
+
     def __getattr__(self, k):
         return getattr(self.origin_func, k)
 
@@ -71,13 +75,15 @@ class _TensorflowFunctionWrapper:
         try:
             import tensorflow as tf
         except ImportError:
-            raise ImportError("Tensorflow package is required to use TfSavedModelArtifact")
+            raise ImportError(
+                "Tensorflow package is required to use TfSavedModelArtifact")
 
         if _input.dtype != tensorspec.dtype:
             # may raise TypeError
             _input = tf.dtypes.cast(_input, tensorspec.dtype)
         if not tensorspec.is_compatible_with(_input):
-            _input = tf.reshape(_input, tuple(i is None and -1 or i for i in tensorspec.shape))
+            _input = tf.reshape(_input, tuple(
+                i is None and -1 or i for i in tensorspec.shape))
         return _input
 
     @classmethod
@@ -86,9 +92,10 @@ class _TensorflowFunctionWrapper:
             from tensorflow.python.util import tf_inspect
             from tensorflow.python.eager import def_function
             # API above are also included in TensorFlow 1.14
-            # ref of fullargspec: https://github.com/tensorflow/tensorflow/blob/v2.0.0/tensorflow/python/eager/function.py#L1598
+            # https://github.com/tensorflow/tensorflow/blob/v2.0.0/tensorflow/python/eager/function.py#L1598
         except ImportError:
-            raise ImportError("Tensorflow package is required to use TfSavedModelArtifact")
+            raise ImportError(
+                "Tensorflow package is required to use TfSavedModelArtifact")
 
         for k in dir(loaded_model):
             v = getattr(loaded_model, k, None)
