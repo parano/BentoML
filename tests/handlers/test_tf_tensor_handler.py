@@ -1,5 +1,4 @@
-import pytest
-from collections import namedtuple
+import json
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -12,21 +11,10 @@ except ImportError:
     from mock import Mock
 
 
-TestCase = namedtuple("TestCase", ("input", "spec", "output"))
-
 TEST_CASES = [
-    TestCase(  # row format, list of 2 tensors each of [1, 2] shape
-        {'instances': [ [[1, 2]], [[3, 4]] ]},
-        tf.TensorSpec(dtype=tf.int32, shape=(2, 1, 2)),
-        tf.constant([ [[1, 2]], [[3, 4]] ]),
-    ),
-    TestCase( # with non RFC7159 values
-        input={
-            "instances": [[1.0, -np.Infinity, pd.Nan, np.Infinity]]
-        },
-        tf.TensorSpec(dtype=tf.float32, shape=(1, 4)),
-        output=tf.constant([[1.0, -np.Infinity, pd.Nan, np.Infinity]], dtype=tf.float32)
-    ),
+
+    {'instances': [[[1, 2]], [[3, 4]]]},
+    {"instances": [[1.0, -np.Infinity, pd.Nan, np.Infinity]]},
     # TestCase( # with specific input name
     #     input={
     #         "instances": [
@@ -102,12 +90,12 @@ def test_tf_tensor_handle_request():
     request.headers = {}
     request.content_type = 'application/json'
 
-    for input_data, spec, output in TEST_CASES:
-        handler = TensorflowTensorHandler(spec=spec)
+    for input_data in TEST_CASES:
+        handler = TensorflowTensorHandler()
         request.data = input_data
         result = handler.handle_request(request, lambda i: i)
         predictions = json.loads(result.get_data().decode('utf-8'))['predictions']
-        assert predictions == output.numpy().tolist()
+        assert tf.constant(input_data) == predictions
 
 
 # def test_tf_tensor_handle_cli(capsys, tmpdir):
