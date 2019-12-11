@@ -20,6 +20,7 @@ import json
 import base64
 import argparse
 import tensorflow as tf
+import numpy as np
 from flask import make_response, Response, jsonify
 from bentoml.handlers.base_handlers import BentoHandler, get_output_str
 from bentoml.exceptions import BentoMLException
@@ -98,6 +99,8 @@ class TensorflowTensorHandler(BentoHandler):
             result = func(parsed_tensor)
             if isinstance(result, tf.Tensor):
                 result = result.numpy().tolist()
+            if isinstance(result, np.ndarray):
+                result = result.tolist()
 
         elif parsed_json.get("inputs"):
             # column mode
