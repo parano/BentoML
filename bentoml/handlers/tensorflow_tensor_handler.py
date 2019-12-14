@@ -17,34 +17,20 @@ from __future__ import division
 from __future__ import print_function
 
 import json
-import base64
 import argparse
 import tensorflow as tf
 import numpy as np
 from flask import make_response, Response, jsonify
-from bentoml.handlers.base_handlers import BentoHandler, get_output_str
+from bentoml.handlers.base_handlers import BentoHandler, get_output_str, NestedDecoder
 from bentoml.exceptions import BentoMLException
 
 
-B64_KEY = 'b64'
+decode_b64_if_needed = NestedDecoder([NestedDecoder.B64_DECODER])
 
-
-def decode_b64_if_needed(value):
-    if isinstance(value, dict):
-        if B64_KEY in value:
-            return base64.b64decode(value[B64_KEY])
-        else:
-            new_value = {}
-            for k, v in value.iteritems():
-                new_value[k] = decode_b64_if_needed(v)
-            return new_value
-    elif isinstance(value, list):
-        new_value = []
-        for v in value:
-            new_value.append(decode_b64_if_needed(v))
-        return new_value
-    else:
-        return value
+decode_tf_if_needed = NestedDecoder([
+    NestedDecoder.TF_TENSOR_DECODER,
+    NestedDecoder.NDARRAY_DECODER,
+])
 
 
 class TensorflowTensorHandler(BentoHandler):
@@ -112,10 +98,7 @@ class TensorflowTensorHandler(BentoHandler):
             instances = decode_b64_if_needed(instances)
             parsed_tensor = tf.constant(instances)
             result = func(parsed_tensor)
-            if isinstance(result, tf.Tensor):
-                result = result.numpy().tolist()
-            if isinstance(result, np.ndarray):
-                result = result.tolist()
+            result = decode_tf_if_needed(result)
 
         elif parsed_json.get("inputs"):
             raise NotImplementedError("column format 'inputs' is not implemented")
