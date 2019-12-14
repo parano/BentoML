@@ -102,7 +102,6 @@ class NestedDecoder:
     @staticmethod
     def TF_TENSOR_DECODER(obj):
         import tensorflow as tf
-        import numpy as np
         if isinstance(obj, tf.Tensor):
             if tf.__version__.startswith("2."):
                 ndarray = obj.numpy()
@@ -124,7 +123,6 @@ class NestedDecoder:
 
     @staticmethod
     def NDARRAY_DECODER(obj):
-        import numpy as np
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         else:

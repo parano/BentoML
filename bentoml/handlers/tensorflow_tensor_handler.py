@@ -19,10 +19,9 @@ from __future__ import print_function
 import json
 import argparse
 import tensorflow as tf
-import numpy as np
-from flask import make_response, Response, jsonify
+from flask import Response
 from bentoml.handlers.base_handlers import BentoHandler, get_output_str, NestedDecoder
-from bentoml.exceptions import BentoMLException
+from bentoml.exceptions import BentoMLException, BadInput
 
 
 decode_b64_if_needed = NestedDecoder([NestedDecoder.B64_DECODER])
@@ -123,13 +122,8 @@ class TensorflowTensorHandler(BentoHandler):
         """
         output_format = request.headers.get("output", "json")
         if output_format not in {"json", "str"}:
-            return make_response(
-                jsonify(
-                    message="Request output must be 'json' or 'str'"
-                    "for this BentoService API"
-                ),
-                400,
-            )
+            raise BadInput(
+                "Request output must be 'json' or 'str' for this BentoService API")
         if request.content_type == "application/json":
             input_str = request.data.decode("utf-8")
             output_format = request.headers.get("output", "json")
@@ -137,13 +131,9 @@ class TensorflowTensorHandler(BentoHandler):
             return Response(
                 response=result_str, status=200, mimetype="application/json")
         else:
-            return make_response(
-                jsonify(
-                    message="Request content-type must be 'application/json'"
-                    "for this BentoService API"
-                ),
-                400,
-            )
+            raise BadInput(
+                "Request content-type must be 'application/json'"
+                " for this BentoService API")
 
     def handle_cli(self, args, func):
         parser = argparse.ArgumentParser()
