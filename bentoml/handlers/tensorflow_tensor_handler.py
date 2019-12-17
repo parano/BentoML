@@ -18,7 +18,6 @@ from __future__ import print_function
 
 import json
 import argparse
-import tensorflow as tf
 from flask import Response
 from bentoml.handlers.utils import (
     NestedConverter, tf_b64_2_bytes, tf_tendor_2_serializable)
@@ -89,6 +88,7 @@ class TensorflowTensorHandler(BentoHandler):
             raise NotImplementedError(f"method {self.method} is not implemented")
 
     def _handle_raw_str(self, raw_str, output_format, func):
+        import tensorflow as tf
         parsed_json = json.loads(raw_str)
         if parsed_json.get("instances") is not None:
             instances = parsed_json.get("instances")
