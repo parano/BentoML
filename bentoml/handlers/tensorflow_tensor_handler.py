@@ -20,16 +20,14 @@ import json
 import argparse
 import tensorflow as tf
 from flask import Response
-from bentoml.handlers.base_handlers import BentoHandler, get_output_str, NestedDecoder
+from bentoml.handlers.utils import (
+    NestedConverter, tf_b64_2_bytes, tf_tendor_2_serializable)
+from bentoml.handlers.base_handlers import BentoHandler, get_output_str
 from bentoml.exceptions import BentoMLException, BadInput
 
 
-decode_b64_if_needed = NestedDecoder([NestedDecoder.B64_DECODER])
-
-decode_tf_if_needed = NestedDecoder([
-    NestedDecoder.TF_TENSOR_DECODER,
-    NestedDecoder.NDARRAY_DECODER,
-])
+decode_b64_if_needed = NestedConverter(tf_b64_2_bytes)
+decode_tf_if_needed = NestedConverter(tf_tendor_2_serializable)
 
 
 class TensorflowTensorHandler(BentoHandler):
@@ -104,7 +102,7 @@ class TensorflowTensorHandler(BentoHandler):
 
         if output_format == "json":
             result_object = {"predictions": result}
-            result_str = get_output_str(result_object, output_format)
+            result_str = json.dumps(result_object)
         elif output_format == "str":
             result_str = get_output_str(result, output_format)
 
