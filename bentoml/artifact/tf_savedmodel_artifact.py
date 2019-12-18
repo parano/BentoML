@@ -88,7 +88,7 @@ class _TensorflowFunctionWrapper:
         return _input
 
     @classmethod
-    def hook_loaded_model_functions(cls, loaded_model):
+    def hook_loaded_model(cls, loaded_model):
         try:
             from tensorflow.python.util import tf_inspect
             from tensorflow.python.eager import def_function
