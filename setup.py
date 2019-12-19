@@ -20,7 +20,7 @@ with open("README.md", "r") as f:
 
 install_requires = [
     "ruamel.yaml>=0.15.0",
-    "numpy",
+    'numpy >= 1.16.0, < 2.0',
     "flask",
     "gunicorn",
     "click>=7.0",
@@ -33,7 +33,7 @@ install_requires = [
     "docker",
     "configparser",
     "sqlalchemy>=1.3.0",
-    "protobuf>=3.6.0",
+    "protobuf>=3.8.0",
     "grpcio",
     "cerberus",
     "tabulate",
