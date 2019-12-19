@@ -20,7 +20,7 @@ with open("README.md", "r") as f:
 
 install_requires = [
     "ruamel.yaml>=0.15.0",
-    'numpy >= 1.17.0, < 2.0',
+    'numpy>=1.16.0,<2.0',
     "flask",
     "gunicorn",
     "click>=7.0",
@@ -61,7 +61,6 @@ test_requires = (
     [
         "pytest>=4.1.0",
         "pytest-cov>=2.7.1",
-        "snapshottest>=0.5.0",
         "mock>=2.0.0",
         "coverage>=4.4",
         "codecov",
@@ -74,13 +73,13 @@ test_requires = (
 
 dev_requires = [
     "tox>=3.12.1",
+    "tox-conda>=0.2.0",
     "flake8",
     "twine",
     "setuptools",
     "gitpython>=2.0.2",
     "grpcio-tools",
     "pylint>=2.3.1",
-    "tox-conda>=0.2.0",
     "black",
 ]
 
