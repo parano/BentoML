@@ -65,7 +65,7 @@ class DeploymentOperatorBase(object):
         """
 
     @abstractmethod
-    def update(self, deployment_pb, previous_deployment):
+    def update(self, deployment_pb):
         """
         Update existing deployment based on deployment_pb spec
         """
@@ -81,3 +81,46 @@ class DeploymentOperatorBase(object):
         """
         Fetch current state of an existing deployment created with deployment_pb spec
         """
+        # state: running / pending / error
+        # endpoint: ...
+        # s3_bucket: ...
+        #
+        # # updatable fields in spec
+        # api_name
+        # instance_type
+        # instance_count
+        # num_of_gunicorn_per_instance
+        # bento_name
+        # bento_version
+
+
+    def reconcile(self, deployment_pb):
+        pass
+    #     needs_update, critical_error = compare(current_state, desired_state)
+    #
+    #     if needs_delete:
+    #         self.delete()
+    #         return
+    #
+    #     if needs_update:
+    #         self.update()
+    #
+    #     if critical_error:
+    #         self.delte()
+    #         self.create()
+    #
+    #     if current_state.pending:
+    #         # wait
+    #         return
+    #
+    #     return ..
+
+
+# deployment_spec_yaml(desired state) => deployment
+#
+# create
+# delete
+#
+# update
+# reconcile
+#
