@@ -24,7 +24,7 @@ from bentoml.handlers.utils import (
     tf_b64_2_bytes,
     tf_tensor_2_serializable,
 )
-from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json
+from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json, handle_aws_lambda_error_response
 from bentoml.exceptions import BentoMLException, BadInput
 
 
@@ -127,6 +127,7 @@ class TensorflowTensorHandler(BentoHandler):
         result = self._handle_raw_str(parsed_args.input, parsed_args.output, func)
         print(result)
 
+    @handle_aws_lambda_error_response
     def handle_aws_lambda_event(self, event, func):
         if event["headers"].get("Content-Type", "") == "application/json":
             result = self._handle_raw_str(event["body"], "json", func)

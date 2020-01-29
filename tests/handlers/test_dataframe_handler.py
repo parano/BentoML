@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
+import json
 
 from bentoml.handlers import DataframeHandler
 from bentoml.handlers.dataframe_handler import _check_dataframe_column_contains
@@ -68,12 +69,13 @@ def test_dataframe_handle_aws_lambda_event():
     assert response["statusCode"] == 200
     assert response["body"] == '"john"'
 
-    with pytest.raises(BadInput):
-        event_with_bad_input = {
-            "headers": {},
-            "body": "bad_input_content",
-        }
-        handler.handle_aws_lambda_event(event_with_bad_input, test_func)
+    event_with_bad_input = {
+        "headers": {},
+        "body": "bad_input_content",
+    }
+    response = handler.handle_aws_lambda_event(event_with_bad_input, test_func)
+    assert response["statusCode"] == 400
+    assert response["body"]['message'].startswith("Failed parsing request data")
 
 
 def test_check_dataframe_column_contains():

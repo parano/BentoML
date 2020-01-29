@@ -27,6 +27,7 @@ from bentoml.handlers.base_handlers import (
     BentoHandler,
     api_func_result_to_json,
     PANDAS_DATAFRAME_TO_DICT_ORIENT_OPTIONS,
+    handle_aws_lambda_error_response,
 )
 from bentoml.utils import is_url
 from bentoml.utils.s3 import is_s3_url
@@ -201,6 +202,7 @@ class DataframeHandler(BentoHandler):
             result = str(result)
         print(result)
 
+    @handle_aws_lambda_error_response
     def handle_aws_lambda_event(self, event, func):
         if event["headers"].get("Content-Type", None) == "text/csv":
             df = pd.read_csv(event["body"])

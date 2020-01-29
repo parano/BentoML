@@ -17,9 +17,12 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+from functools import wraps
 
 import pandas as pd
 import numpy as np
+
+from bentoml.exceptions import BentoMLException
 
 
 PANDAS_DATAFRAME_TO_DICT_ORIENT_OPTIONS = [
@@ -114,3 +117,14 @@ def api_func_result_to_json(result, pandas_dataframe_orient="records"):
     except (TypeError, OverflowError):
         # when result is not JSON serializable
         return json.dumps({"result": str(result)})
+
+
+def handle_aws_lambda_error_response(handle):
+    @wraps(handle)
+    def wrapper(*args, **kwargs):
+        try:
+            return handle(*args, **kwargs)
+        except BentoMLException as e:
+            return {"statusCode": e.status_code, "body": {"message": str(e)}}
+
+    return wrapper

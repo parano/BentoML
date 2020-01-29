@@ -23,7 +23,7 @@ import argparse
 from flask import Response
 
 from bentoml.exceptions import BadInput
-from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json
+from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json, handle_aws_lambda_error_response
 
 
 class JsonHandler(BentoHandler):
@@ -65,6 +65,7 @@ class JsonHandler(BentoHandler):
             result = str(result)
         print(result)
 
+    @handle_aws_lambda_error_response
     def handle_aws_lambda_event(self, event, func):
         if event["headers"]["Content-Type"] == "application/json":
             parsed_json = json.loads(event["body"])

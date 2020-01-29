@@ -26,7 +26,7 @@ from flask import Response
 
 from bentoml import config
 from bentoml.exceptions import BadInput, MissingDependencyException
-from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json
+from bentoml.handlers.base_handlers import BentoHandler, api_func_result_to_json, handle_aws_lambda_error_response
 
 
 def _import_imageio_imread():
@@ -182,6 +182,7 @@ class ImageHandler(BentoHandler):
             result = str(result)
         print(result)
 
+    @handle_aws_lambda_error_response
     def handle_aws_lambda_event(self, event, func):
         if event["headers"].get("Content-Type", "").startswith("images/"):
             image = self.imread(base64.decodebytes(event["body"]), pilmode=self.pilmode)
