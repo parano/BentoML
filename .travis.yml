@@ -5,7 +5,6 @@ dist: trusty
 os:
   - windows
   - linux
-  - osx
 
 cache: pip
 
@@ -14,6 +13,7 @@ python:
   - 3.7
 
 install:
+  - "pip install --upgrade pip"
   - "pip install ."
   - "pip install --upgrade .[test]"
 
