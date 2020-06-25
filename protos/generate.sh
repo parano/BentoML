@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-BENTOML_SRC_DIR=$(git rev-parse --show-toplevel)
+GIT_ROOT=$(git rev-parse --show-toplevel)
+cd "$GIT_ROOT"
 
-echo $BENTOML_SRC_DIR
-
-cd "$BENTOML_SRC_DIR"
-
-if ! [ -x "$(command -v bentoml)" ]; then
-  echo "Installing BentoML dev dependencies"
-  pip install -e .[dev]
-fi
-
-PROTO_PATH=$BENTOML_SRC_DIR/protos
-PYOUT_PATH=$BENTOML_SRC_DIR/bentoml/yatai/proto
+PROTO_PATH=$GIT_ROOT/protos
+PYOUT_PATH=$GIT_ROOT/bentoml/yatai/proto
 
 echo "Cleaning up existing proto generated py code.."
 rm -rf "$PYOUT_PATH"
@@ -45,7 +37,6 @@ sed -i'.old' 's/^import bentoml.yatai.proto.google.\([^ ]*\)_pb2 as \([^ ]*\)$/i
 sed -i'.old' 's/^from bentoml.yatai.proto.google.\([^ ]*\) import \([^ ]*\)_pb2 as \([^ ]*\)$/from google.\1 import \2_pb2 as \3/' "$pyfile"
 rm "$pyfile".old
 done
-
 
 PKG_PATH=$PYOUT_PATH
 PKGS=$(find "$PKG_PATH" -type d)
@@ -79,7 +70,7 @@ echo "Generate grpc code for javascript/typescript"
 echo "Please make sure protobufjs is installed on your system"
 echo "You can install with npm i -g protobufjs"
 
-JS_GRPC_PATH=$BENTOML_SRC_DIR/bentoml/yatai/web/src/generated
+JS_GRPC_PATH=$GIT_ROOT/bentoml/yatai/web/src/generated
 echo "Cleaning up existing proto generated js code.."
 rm -rf "$JS_GRPC_PATH"
 mkdir -p "$JS_GRPC_PATH"
@@ -88,6 +79,6 @@ echo "Generating grpc JS code..."
 pbjs -t static-module -w es6 --keep-case --force-number -o bentoml_grpc.js "$PROTO_PATH"/*.proto
 pbts -o bentoml_grpc.d.ts bentoml_grpc.js
 
-mv "$BENTOML_SRC_DIR"/bentoml_grpc.js "$JS_GRPC_PATH"
-mv "$BENTOML_SRC_DIR"/bentoml_grpc.d.ts "$JS_GRPC_PATH"
+mv "$GIT_ROOT"/bentoml_grpc.js "$JS_GRPC_PATH"
+mv "$GIT_ROOT"/bentoml_grpc.d.ts "$JS_GRPC_PATH"
 echo "Finish generating protobuf js code"
