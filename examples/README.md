@@ -15,7 +15,7 @@ working on :)
 ## Index
 
 | Example                                                                                                                                      | Framework           | Model                                | Functionality                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------------ | --------------------------------------- |
+|----------------------------------------------------------------------------------------------------------------------------------------------| ------------------- |--------------------------------------|-----------------------------------------|
 | [custom_model_runner](https://github.com/bentoml/BentoML/tree/main/examples/custom_model_runner)                                             | PyTorch             | MNIST                                | Custom Model Runner, Prometheus, gRPC   |
 | [custom_python_model/lda_classifier](https://github.com/bentoml/BentoML/tree/main/examples/custom_python_model/lda_classifier)               | Picklable           | LDA                                  | Custom Python Model                     |
 | [custom_python_model/simple_pickable_model](https://github.com/bentoml/BentoML/tree/main/examples/custom_python_model/simple_pickable_model) | Picklable           | Python Function                      |                                         |
@@ -40,7 +40,8 @@ working on :)
 | [sklearn/pipeline](https://github.com/bentoml/BentoML/tree/main/examples/sklearn/pipeline)                                                   | SKLearn             | Pipeline                             |                                         |
 | [tensorflow2_keras](https://github.com/bentoml/BentoML/tree/main/examples/tensorflow2_keras)                                                 | TensorFlow, Keras   | MNIST                                | Notebook                                |
 | [tensorflow2_native](https://github.com/bentoml/BentoML/tree/main/examples/tensorflow2_native)                                               | TensforFlow         | MNIST                                | Notebook                                |
-| [xgboost](https://github.com/bentoml/BentoML/tree/main/examples/xgboost)                                                                     | XGBoost             | DMatrix                              |                                         |
+| [xgboost](https://github.com/bentoml/BentoML/tree/main/examples/xgboost)                                                                     | XGBoost             |                                      |                                         |
+| [Fraud Detection xgboost](https://github.com/bentoml/BentoML/tree/main/examples/fraud_detection)                                             | XGBoost             |                                      | Benchmark, Inference Graph, GPU         |
 | [flax/MNIST](https://github.com/bentoml/BentoML/tree/main/examples/flax/MNIST)                                                               | Flax                | MNIST                                | gRPC, Testing                           |
 
 ## How to contribute
